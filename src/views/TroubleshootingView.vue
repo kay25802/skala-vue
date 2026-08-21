@@ -462,6 +462,124 @@ const goHome = () => {
 
     </section>
 
+    <!-- ================================================= -->
+    <!-- Trouble 6 -->
+    <!-- Vercel Refresh 404 -->
+    <!-- ================================================= -->
+
+    <section class="trouble-card">
+
+    <h4>
+        6. Vercel 배포 후 새로고침 시 404 오류
+    </h4>
+
+
+    <div class="trouble-section">
+
+        <h5>
+        🚨 문제
+        </h5>
+
+        <p>
+        Vercel에 프로젝트를 정상적으로 배포한 후
+        메인 화면에서 페이지 이동은 정상적으로 동작했지만,
+        <code>/weather</code> 또는
+        <code>/weather/city_01</code>과 같은
+        Vue Router 경로에서 브라우저를 새로고침하면
+        다음과 같은 404 오류가 발생했습니다.
+        </p>
+
+
+        <div class="code-box">
+        404: NOT_FOUND
+        </div>
+
+    </div>
+
+
+    <div class="trouble-section">
+
+        <h5>
+        🔍 원인
+        </h5>
+
+        <p>
+        Vue Router의
+        <code>createWebHistory()</code>
+        방식을 사용하면
+        브라우저 주소에는 실제 경로가 표시됩니다.
+        </p>
+
+        <p>
+        하지만 새로고침 시에는 Vue Router가 아니라
+        Vercel 서버가 직접
+        <code>/weather</code> 또는
+        <code>/weather/city_01</code>
+        경로의 파일을 찾으려고 합니다.
+        </p>
+
+        <p>
+        해당 경로에 실제 HTML 파일이 존재하지 않기 때문에
+        Vercel에서 404 오류가 발생했습니다.
+        </p>
+
+    </div>
+
+
+    <div class="trouble-section">
+
+        <h5>
+        ✅ 해결
+        </h5>
+
+        <p>
+        프로젝트 루트에
+        <code>vercel.json</code>
+        파일을 생성하고,
+        모든 요청을 Vue 애플리케이션의
+        <code>index.html</code>로 전달하도록
+        Rewrite 설정을 추가했습니다.
+        </p>
+
+
+        <div class="code-box">
+    {
+    "rewrites": [
+        {
+        "source": "/(.*)",
+        "destination": "/index.html"
+        }
+    ]
+    }
+        </div>
+
+
+        <p>
+        이후 수정된 설정 파일을 GitHub에 Push하여
+        Vercel이 자동으로 재배포하도록 했습니다.
+        </p>
+
+
+        <div class="code-box">
+    git add vercel.json
+    git commit -m "fix: add vercel SPA rewrite"
+    git push origin main
+        </div>
+
+    </div>
+
+
+    <div class="result-box">
+        💡 결과:
+        Vercel 서버의 모든 경로 요청이
+        index.html로 전달되면서
+        Vue Router가 URL을 다시 처리할 수 있게 되었고,
+        /weather 및 지역 상세 페이지에서
+        새로고침해도 404 오류가 발생하지 않도록 해결했습니다.
+    </div>
+
+    </section>
+
 
     <!-- ================================================= -->
     <!-- 메인 이동 -->
