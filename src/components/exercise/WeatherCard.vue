@@ -1,10 +1,23 @@
 <script setup>
+import { computed } from 'vue'
+import { useConfigStore } from '@/stores/configStore'
+
+
+// =====================================================
+// Pinia Store
+// 날씨 단위 설정값을 전역 Store에서 가져옴
+// =====================================================
+
+const configStore = useConfigStore()
+
+
 // =====================================================
 // Props
 // 부모 컴포넌트로부터 도시 데이터와 기준값을 전달받음
 // =====================================================
 
-defineProps({
+const props = defineProps({
+
   // 도시 하나의 날씨 정보
   cityItem: {
     type: Object,
@@ -34,6 +47,48 @@ const emit = defineEmits([
   'select-card',
   'click-detail',
 ])
+
+
+// =====================================================
+// computed
+// 현재 Store의 단위 설정에 따라 표시할 온도를 계산
+//
+// 원본 데이터는 항상 섭씨로 유지
+// celsius    → 원본 그대로 사용
+// fahrenheit → (섭씨 × 9 / 5) + 32
+// =====================================================
+
+const displayTemp = computed(() => {
+
+  const rawTemp = props.cityItem.temp
+
+  if (configStore.unit === 'fahrenheit') {
+    return Math.round(
+      (rawTemp * 9) / 5 + 32
+    )
+  }
+
+  return rawTemp
+})
+
+
+// =====================================================
+// computed
+// 더운 날씨 기준 온도도 현재 단위에 맞게 화면에 표시
+//
+// 실제 판단 기준은 hotStandard의 섭씨값을 그대로 사용
+// =====================================================
+
+const displayHotStandard = computed(() => {
+
+  if (configStore.unit === 'fahrenheit') {
+    return Math.round(
+      (props.hotStandard * 9) / 5 + 32
+    )
+  }
+
+  return props.hotStandard
+})
 </script>
 
 
@@ -59,11 +114,15 @@ const emit = defineEmits([
 
     <!-- ================================================= -->
     <!-- 기온 -->
+    <!-- Pinia의 단위 설정에 따라 °C / °F로 변경 -->
     <!-- ================================================= -->
 
     <p>
       🌡️ 현재 기온:
-      <strong>{{ cityItem.temp }}°C</strong>
+
+      <strong>
+        {{ displayTemp }}{{ configStore.unitSymbol }}
+      </strong>
     </p>
 
 
@@ -89,6 +148,8 @@ const emit = defineEmits([
 
     <!-- ================================================= -->
     <!-- 더움 / 선선함 -->
+    <!-- 실제 조건 판단은 원본 섭씨값 사용 -->
+    <!-- 표시되는 기준값만 현재 단위에 맞춰 변환 -->
     <!-- ================================================= -->
 
     <div class="badge-area">
@@ -97,14 +158,22 @@ const emit = defineEmits([
         v-if="cityItem.temp >= hotStandard"
         class="badge hot"
       >
-        🔥 더움 ({{ hotStandard }}도 이상)
+        🔥 더움
+        (
+        {{ displayHotStandard }}{{ configStore.unitSymbol }}
+        이상
+        )
       </span>
 
       <span
         v-else
         class="badge cool"
       >
-        ❄️ 선선함 ({{ hotStandard }}도 미만)
+        ❄️ 선선함
+        (
+        {{ displayHotStandard }}{{ configStore.unitSymbol }}
+        미만
+        )
       </span>
 
     </div>
@@ -168,14 +237,7 @@ const emit = defineEmits([
 
     <!-- ================================================= -->
     <!-- 상세보기 -->
-    <!--
-      기존:
-      도시 이름과 날씨 상태를 부모에게 전달
-
-      변경:
-      Vue Router 상세 페이지 이동을 위해
-      도시 id를 부모에게 전달
-    -->
+    <!-- 도시 id를 부모에게 전달 -->
     <!-- ================================================= -->
 
     <button
