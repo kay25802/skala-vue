@@ -1,63 +1,81 @@
 <script setup>
 import { useConfigStore } from '@/stores/configStore'
 
-// =====================================================
-// Pinia Store
-// =====================================================
-
 const configStore = useConfigStore()
 </script>
 
-
 <template>
-  <div class="unit-toggler">
+  <div class="config-area">
 
-    <span>
-      날씨단위:
+    <!-- 온도 단위 -->
+    <div class="config-item">
+      <span>
+        날씨단위:
 
-      <strong>
+        <strong>
+          {{
+            configStore.unit === 'celsius'
+              ? `섭씨(${configStore.unitSymbol})`
+              : `화씨(${configStore.unitSymbol})`
+          }}
+        </strong>
+      </span>
+
+      <button
+        class="toggle-btn"
+        @click="configStore.toggleUnit()"
+      >
+        단위변경
+      </button>
+    </div>
+
+
+    <!-- 언어 설정 -->
+    <div class="config-item">
+      <span>
+        언어:
+
+        <strong>
+          {{ configStore.languageLabel }}
+        </strong>
+      </span>
+
+      <button
+        class="toggle-btn"
+        @click="configStore.toggleLanguage()"
+      >
         {{
-          configStore.unit === 'celsius'
-            ? `섭씨(${configStore.unitSymbol})`
-            : `화씨(${configStore.unitSymbol})`
+          configStore.language === 'ko'
+            ? '영어로 변경'
+            : '한글로 변경'
         }}
-      </strong>
-    </span>
-
-
-    <button
-      class="toggle-btn"
-      @click="configStore.toggleUnit"
-    >
-      단위변경
-    </button>
+      </button>
+    </div>
 
   </div>
 </template>
 
-
 <style scoped>
-.unit-toggler {
+.config-area {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-left: auto;
+}
+
+.config-item {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-
-  margin-left: auto;
-
-  text-align: center;
 }
 
 .toggle-btn {
   padding: 6px 10px;
-
   background-color: #4b6584;
   color: #ffffff;
-
   border: none;
   border-radius: 4px;
-
   cursor: pointer;
-
   font-weight: bold;
 }
 

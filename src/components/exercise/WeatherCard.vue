@@ -1,11 +1,11 @@
-<script setup>
+ <script setup>
 import { computed } from 'vue'
 import { useConfigStore } from '@/stores/configStore'
 
 
 // =====================================================
 // Pinia Store
-// 날씨 단위 설정값을 전역 Store에서 가져옴
+// 날씨 단위 및 언어 설정값을 전역 Store에서 가져옴
 // =====================================================
 
 const configStore = useConfigStore()
@@ -18,19 +18,16 @@ const configStore = useConfigStore()
 
 const props = defineProps({
 
-  // 도시 하나의 날씨 정보
   cityItem: {
     type: Object,
     required: true,
   },
 
-  // 더운 날씨 판단 기준
   hotStandard: {
     type: Number,
     required: true,
   },
 
-  // 우산 추천 강수확률 기준
   rainStandard: {
     type: Number,
     required: true,
@@ -40,7 +37,6 @@ const props = defineProps({
 
 // =====================================================
 // Emits
-// 자식에서 발생한 사용자 행동을 부모에게 전달
 // =====================================================
 
 const emit = defineEmits([
@@ -52,10 +48,6 @@ const emit = defineEmits([
 // =====================================================
 // computed
 // 현재 Store의 단위 설정에 따라 표시할 온도를 계산
-//
-// 원본 데이터는 항상 섭씨로 유지
-// celsius    → 원본 그대로 사용
-// fahrenheit → (섭씨 × 9 / 5) + 32
 // =====================================================
 
 const displayTemp = computed(() => {
@@ -74,9 +66,7 @@ const displayTemp = computed(() => {
 
 // =====================================================
 // computed
-// 더운 날씨 기준 온도도 현재 단위에 맞게 화면에 표시
-//
-// 실제 판단 기준은 hotStandard의 섭씨값을 그대로 사용
+// 더운 날씨 기준값 표시
 // =====================================================
 
 const displayHotStandard = computed(() => {
@@ -89,36 +79,98 @@ const displayHotStandard = computed(() => {
 
   return props.hotStandard
 })
+
+
+// =====================================================
+// ✅ 언어 변환
+// 도시 이름
+// =====================================================
+
+const displayCityName = computed(() => {
+
+  if (configStore.language === 'en') {
+
+    const cityNames = {
+      서울: 'Seoul',
+      수원: 'Suwon',
+      부산: 'Busan',
+      광주: 'Gwangju',
+    }
+
+    return cityNames[props.cityItem.name]
+      || props.cityItem.name
+  }
+
+  return props.cityItem.name
+})
+
+
+// =====================================================
+// ✅ 언어 변환
+// 날씨 상태
+// =====================================================
+
+const displayStatus = computed(() => {
+
+  if (configStore.language === 'en') {
+
+    const statusNames = {
+      맑음: 'Sunny',
+      비: 'Rainy',
+      구름: 'Cloudy',
+    }
+
+    return statusNames[props.cityItem.status]
+      || props.cityItem.status
+  }
+
+  return props.cityItem.status
+})
+
+
+// =====================================================
+// ✅ 카드 선택 메시지
+// =====================================================
+
+const selectCard = () => {
+
+  const message =
+    configStore.language === 'ko'
+      ? `${props.cityItem.name}이 선택되었습니다.`
+      : `${displayCityName.value} has been selected.`
+
+  emit('select-card', message)
+}
 </script>
 
 
 <template>
   <div
     class="weather-card"
-    @click="
-      emit(
-        'select-card',
-        `${cityItem.name}이 선택되었습니다.`
-      )
-    "
+    @click="selectCard"
   >
 
     <!-- ================================================= -->
-    <!-- 도시 이름 -->
+    <!-- 도시 이름 / 날씨 상태 -->
     <!-- ================================================= -->
 
     <h4>
-      {{ cityItem.name }} ({{ cityItem.status }})
+      {{ displayCityName }}
+      ({{ displayStatus }})
     </h4>
 
 
     <!-- ================================================= -->
-    <!-- 기온 -->
-    <!-- Pinia의 단위 설정에 따라 °C / °F로 변경 -->
+    <!-- 현재 기온 -->
     <!-- ================================================= -->
 
     <p>
-      🌡️ 현재 기온:
+      🌡️
+      {{
+        configStore.language === 'ko'
+          ? '현재 기온:'
+          : 'Temperature:'
+      }}
 
       <strong>
         {{ displayTemp }}{{ configStore.unitSymbol }}
@@ -131,8 +183,16 @@ const displayHotStandard = computed(() => {
     <!-- ================================================= -->
 
     <p>
-      💧 습도:
-      <strong>{{ cityItem.humidity }}%</strong>
+      💧
+      {{
+        configStore.language === 'ko'
+          ? '습도:'
+          : 'Humidity:'
+      }}
+
+      <strong>
+        {{ cityItem.humidity }}%
+      </strong>
     </p>
 
 
@@ -141,15 +201,21 @@ const displayHotStandard = computed(() => {
     <!-- ================================================= -->
 
     <p>
-      ☔ 강수확률:
-      <strong>{{ cityItem.rain }}%</strong>
+      ☔
+      {{
+        configStore.language === 'ko'
+          ? '강수확률:'
+          : 'Chance of Rain:'
+      }}
+
+      <strong>
+        {{ cityItem.rain }}%
+      </strong>
     </p>
 
 
     <!-- ================================================= -->
     <!-- 더움 / 선선함 -->
-    <!-- 실제 조건 판단은 원본 섭씨값 사용 -->
-    <!-- 표시되는 기준값만 현재 단위에 맞춰 변환 -->
     <!-- ================================================= -->
 
     <div class="badge-area">
@@ -158,22 +224,43 @@ const displayHotStandard = computed(() => {
         v-if="cityItem.temp >= hotStandard"
         class="badge hot"
       >
-        🔥 더움
-        (
-        {{ displayHotStandard }}{{ configStore.unitSymbol }}
-        이상
-        )
+        <template v-if="configStore.language === 'ko'">
+          🔥 더움
+          (
+          {{ displayHotStandard }}{{ configStore.unitSymbol }}
+          이상
+          )
+        </template>
+
+        <template v-else>
+          🔥 Hot
+          (
+          {{ displayHotStandard }}{{ configStore.unitSymbol }}
+          or higher
+          )
+        </template>
       </span>
+
 
       <span
         v-else
         class="badge cool"
       >
-        ❄️ 선선함
-        (
-        {{ displayHotStandard }}{{ configStore.unitSymbol }}
-        미만
-        )
+        <template v-if="configStore.language === 'ko'">
+          ❄️ 선선함
+          (
+          {{ displayHotStandard }}{{ configStore.unitSymbol }}
+          미만
+          )
+        </template>
+
+        <template v-else>
+          ❄️ Cool
+          (
+          below
+          {{ displayHotStandard }}{{ configStore.unitSymbol }}
+          )
+        </template>
       </span>
 
     </div>
@@ -188,19 +275,31 @@ const displayHotStandard = computed(() => {
       <span
         v-if="cityItem.humidity >= 80"
       >
-        💦 습도 높음
+        {{
+          configStore.language === 'ko'
+            ? '💦 습도 높음'
+            : '💦 High Humidity'
+        }}
       </span>
 
       <span
         v-else-if="cityItem.humidity >= 60"
       >
-        💧 습도 보통
+        {{
+          configStore.language === 'ko'
+            ? '💧 습도 보통'
+            : '💧 Moderate Humidity'
+        }}
       </span>
 
       <span
         v-else
       >
-        🌵 건조함
+        {{
+          configStore.language === 'ko'
+            ? '🌵 건조함'
+            : '🌵 Dry'
+        }}
       </span>
 
     </div>
@@ -215,21 +314,33 @@ const displayHotStandard = computed(() => {
       <p
         v-if="cityItem.rain >= rainStandard"
       >
-        ☂️ 비가 올 가능성이 높아요.
-        우산을 챙기세요!
+        {{
+          configStore.language === 'ko'
+            ? '☂️ 비가 올 가능성이 높아요. 우산을 챙기세요!'
+            : '☂️ There is a high chance of rain. Take an umbrella!'
+        }}
       </p>
+
 
       <p
         v-else-if="cityItem.temp >= hotStandard"
       >
-        🧴 날씨가 더워요.
-        자외선 차단제를 챙기세요!
+        {{
+          configStore.language === 'ko'
+            ? '🧴 날씨가 더워요. 자외선 차단제를 챙기세요!'
+            : '🧴 It is hot today. Make sure to use sunscreen!'
+        }}
       </p>
+
 
       <p
         v-else
       >
-        😊 비교적 외출하기 좋은 날씨예요!
+        {{
+          configStore.language === 'ko'
+            ? '😊 비교적 외출하기 좋은 날씨예요!'
+            : '😊 The weather is relatively nice for going outside!'
+        }}
       </p>
 
     </div>
@@ -237,7 +348,6 @@ const displayHotStandard = computed(() => {
 
     <!-- ================================================= -->
     <!-- 상세보기 -->
-    <!-- 도시 id를 부모에게 전달 -->
     <!-- ================================================= -->
 
     <button
@@ -249,7 +359,11 @@ const displayHotStandard = computed(() => {
         )
       "
     >
-      상세보기
+      {{
+        configStore.language === 'ko'
+          ? '상세보기'
+          : 'Details'
+      }}
     </button>
 
   </div>

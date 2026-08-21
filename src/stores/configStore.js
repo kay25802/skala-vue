@@ -4,17 +4,16 @@ import { defineStore } from 'pinia'
 export const useConfigStore = defineStore('config', () => {
 
   // =====================================================
-  // 1. state
-  // 현재 날씨 단위를 저장
-  // 'celsius' 또는 'fahrenheit'
+  // state
   // =====================================================
 
   const unit = ref('celsius')
 
+  const language = ref('ko')
+
 
   // =====================================================
-  // 2. getter
-  // 현재 단위에 맞는 기호 반환
+  // getters
   // =====================================================
 
   const unitSymbol = computed(() => {
@@ -23,10 +22,15 @@ export const useConfigStore = defineStore('config', () => {
       : '°F'
   })
 
+  const languageLabel = computed(() => {
+    return language.value === 'ko'
+      ? '한국어'
+      : 'English'
+  })
+
 
   // =====================================================
-  // 3. action
-  // celsius ↔ fahrenheit 단위 변경
+  // actions
   // =====================================================
 
   function toggleUnit() {
@@ -36,14 +40,22 @@ export const useConfigStore = defineStore('config', () => {
         : 'celsius'
   }
 
+  function toggleLanguage() {
+    language.value =
+      language.value === 'ko'
+        ? 'en'
+        : 'ko'
+  }
 
-  // =====================================================
-  // 외부에서 사용할 값 반환
-  // =====================================================
 
   return {
     unit,
+    language,
+
     unitSymbol,
+    languageLabel,
+
     toggleUnit,
+    toggleLanguage,
   }
 })
