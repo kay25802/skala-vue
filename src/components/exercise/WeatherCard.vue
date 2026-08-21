@@ -1,7 +1,7 @@
 <script setup>
 // =====================================================
 // Props
-// 부모 WeatherParent로부터 도시 데이터와 기준값을 전달받음
+// 부모 컴포넌트로부터 도시 데이터와 기준값을 전달받음
 // =====================================================
 
 defineProps({
@@ -24,6 +24,7 @@ defineProps({
   },
 })
 
+
 // =====================================================
 // Emits
 // 자식에서 발생한 사용자 행동을 부모에게 전달
@@ -34,6 +35,7 @@ const emit = defineEmits([
   'click-detail',
 ])
 </script>
+
 
 <template>
   <div
@@ -46,27 +48,39 @@ const emit = defineEmits([
     "
   >
 
+    <!-- ================================================= -->
     <!-- 도시 이름 -->
+    <!-- ================================================= -->
+
     <h4>
       {{ cityItem.name }} ({{ cityItem.status }})
     </h4>
 
 
+    <!-- ================================================= -->
     <!-- 기온 -->
+    <!-- ================================================= -->
+
     <p>
       🌡️ 현재 기온:
       <strong>{{ cityItem.temp }}°C</strong>
     </p>
 
 
+    <!-- ================================================= -->
     <!-- 습도 -->
+    <!-- ================================================= -->
+
     <p>
       💧 습도:
       <strong>{{ cityItem.humidity }}%</strong>
     </p>
 
 
+    <!-- ================================================= -->
     <!-- 강수확률 -->
+    <!-- ================================================= -->
+
     <p>
       ☔ 강수확률:
       <strong>{{ cityItem.rain }}%</strong>
@@ -102,15 +116,21 @@ const emit = defineEmits([
 
     <div class="humidity-info">
 
-      <span v-if="cityItem.humidity >= 80">
+      <span
+        v-if="cityItem.humidity >= 80"
+      >
         💦 습도 높음
       </span>
 
-      <span v-else-if="cityItem.humidity >= 60">
+      <span
+        v-else-if="cityItem.humidity >= 60"
+      >
         💧 습도 보통
       </span>
 
-      <span v-else>
+      <span
+        v-else
+      >
         🌵 건조함
       </span>
 
@@ -123,17 +143,23 @@ const emit = defineEmits([
 
     <div class="recommend-box">
 
-      <p v-if="cityItem.rain >= rainStandard">
+      <p
+        v-if="cityItem.rain >= rainStandard"
+      >
         ☂️ 비가 올 가능성이 높아요.
         우산을 챙기세요!
       </p>
 
-      <p v-else-if="cityItem.temp >= hotStandard">
+      <p
+        v-else-if="cityItem.temp >= hotStandard"
+      >
         🧴 날씨가 더워요.
         자외선 차단제를 챙기세요!
       </p>
 
-      <p v-else>
+      <p
+        v-else
+      >
         😊 비교적 외출하기 좋은 날씨예요!
       </p>
 
@@ -142,6 +168,14 @@ const emit = defineEmits([
 
     <!-- ================================================= -->
     <!-- 상세보기 -->
+    <!--
+      기존:
+      도시 이름과 날씨 상태를 부모에게 전달
+
+      변경:
+      Vue Router 상세 페이지 이동을 위해
+      도시 id를 부모에게 전달
+    -->
     <!-- ================================================= -->
 
     <button
@@ -149,8 +183,7 @@ const emit = defineEmits([
       @click.stop="
         emit(
           'click-detail',
-          cityItem.name,
-          cityItem.status
+          cityItem.id
         )
       "
     >
