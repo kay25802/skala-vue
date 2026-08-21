@@ -4,14 +4,18 @@ import UnitToggler from './components/exercise/UnitToggler.vue'
 
 <template>
   <div class="app-container">
-    <h1>⛅ 최종과제: 광주_2반_G043_김아영</h1>
+
+    <h1>
+      🌤️ 최종과제: 광주_2반_G043_김아영
+    </h1>
+
     <hr />
 
     <div class="dashboard-wrapper">
 
-      <!-- ============================================== -->
+      <!-- ================================================= -->
       <!-- Navigation Bar -->
-      <!-- ============================================== -->
+      <!-- ================================================= -->
 
       <nav class="navigation-bar">
 
@@ -19,10 +23,14 @@ import UnitToggler from './components/exercise/UnitToggler.vue'
           to="/weather"
           class="nav-item"
         >
-          🌦️ 날씨 대시보드
+          🌤️ 날씨 대시보드
         </RouterLink>
 
-        <span class="divider">|</span>
+
+        <span class="divider">
+          |
+        </span>
+
 
         <RouterLink
           to="/about"
@@ -32,27 +40,42 @@ import UnitToggler from './components/exercise/UnitToggler.vue'
         </RouterLink>
 
 
-        <!-- ============================================ -->
+        <span class="divider">
+          |
+        </span>
+
+
+        <RouterLink
+          to="/troubleshooting"
+          class="nav-item"
+        >
+          🛠️ 트러블슈팅
+        </RouterLink>
+
+
+        <!-- ================================================= -->
         <!-- Pinia Store -->
-        <!-- 온도 단위 및 언어 설정 -->
-        <!-- ============================================ -->
+        <!-- 온도 단위 / 언어 설정 -->
+        <!-- ================================================= -->
 
         <UnitToggler />
 
       </nav>
 
 
-      <!-- ============================================== -->
-      <!-- Router에 따라 View 표시 -->
-      <!-- ============================================== -->
+      <!-- ================================================= -->
+      <!-- Router View -->
+      <!-- ================================================= -->
 
       <main>
         <RouterView />
       </main>
 
     </div>
+
   </div>
 </template>
+
 
 <style>
 @import '@/assets/exercise.css';

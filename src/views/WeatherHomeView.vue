@@ -9,9 +9,27 @@ import {
 
 import { useRouter } from 'vue-router'
 
-import BaseDashboardCard from '../components/exercise/BaseDashboardCard.vue'
-import SearchBar from '../components/exercise/SearchBar.vue'
-import WeatherCard from '../components/exercise/WeatherCard.vue'
+
+// =====================================================
+// Components
+// =====================================================
+
+import BaseDashboardCard
+  from '../components/exercise/BaseDashboardCard.vue'
+
+import SearchBar
+  from '../components/exercise/SearchBar.vue'
+
+import WeatherCard
+  from '../components/exercise/WeatherCard.vue'
+
+import WeatherMap
+  from '../components/exercise/WeatherMap.vue'
+
+
+// =====================================================
+// API
+// =====================================================
 
 import {
   fetchWeatherByCity,
@@ -34,12 +52,11 @@ const router = useRouter()
 // 1. 반응형 상태 관리
 // =====================================================
 
-// 실제 API 데이터를 저장
 const weatherList = ref([])
 
 
 // =====================================================
-// API 조회 도시 목록
+// API 조회 도시
 // =====================================================
 
 const cities = [
@@ -79,14 +96,28 @@ const errorMessage = ref('')
 
 
 // =====================================================
-// 기존 상태
+// 검색어
 // =====================================================
 
 const searchQuery = ref('')
 
+
+// =====================================================
+// 선택된 도시
+// =====================================================
+
 const selectedCityInfo = ref(
-  '카드를 클릭하거나 검색해 보세요.'
+  '카드를 클릭하거나 지도에서 지역을 선택해 보세요.'
 )
+
+
+// ✅ 지도에서 선택한 도시 id
+const selectedCityId = ref(null)
+
+
+// =====================================================
+// 기준값
+// =====================================================
 
 const rainStandard = ref(60)
 
@@ -94,7 +125,7 @@ const hotStandard = ref(25)
 
 
 // =====================================================
-// OpenWeatherMap + Open-Meteo API 호출
+// 실제 날씨 API 조회
 // =====================================================
 
 const loadWeather = async () => {
@@ -109,8 +140,8 @@ const loadWeather = async () => {
       cities.map(async (city) => {
 
         // -------------------------------------------------
-        // 1. OpenWeatherMap
-        // 현재 날씨 + Forecast 동시 호출
+        // OpenWeatherMap
+        // 현재 날씨 + Forecast
         // -------------------------------------------------
 
         const [
@@ -128,7 +159,7 @@ const loadWeather = async () => {
 
 
         // -------------------------------------------------
-        // 2. 가장 가까운 3시간 예보
+        // 가장 가까운 3시간 예보
         // -------------------------------------------------
 
         const nearestForecast =
@@ -136,23 +167,21 @@ const loadWeather = async () => {
 
 
         // -------------------------------------------------
-        // 3. 강수확률
-        //
-        // pop:
-        // 0 ~ 1
-        //
-        // 0.8 → 80%
+        // 강수확률
         // -------------------------------------------------
 
         const rainProbability =
           Math.round(
-            (nearestForecast?.pop ?? 0)
+            (
+              nearestForecast?.pop
+              ?? 0
+            )
             * 100
           )
 
 
         // -------------------------------------------------
-        // 4. OpenWeatherMap에서 도시 좌표 획득
+        // 도시 좌표
         // -------------------------------------------------
 
         const latitude =
@@ -163,8 +192,7 @@ const loadWeather = async () => {
 
 
         // -------------------------------------------------
-        // 5. 외부 API
-        // Open-Meteo Air Quality
+        // Open-Meteo 대기질 API
         // -------------------------------------------------
 
         const airQualityData =
@@ -175,7 +203,7 @@ const loadWeather = async () => {
 
 
         // -------------------------------------------------
-        // 6. WeatherCard 형식으로 데이터 정리
+        // WeatherCard용 데이터
         // -------------------------------------------------
 
         return {
@@ -184,9 +212,10 @@ const loadWeather = async () => {
 
           name: city.name,
 
-          temp: Math.round(
-            currentData.main.temp
-          ),
+          temp:
+            Math.round(
+              currentData.main.temp
+            ),
 
           status:
             currentData
@@ -204,27 +233,19 @@ const loadWeather = async () => {
             currentData.wind?.speed
             ?? 0,
 
-
-          // ===============================================
-          // Open-Meteo 대기질 데이터
-          // ===============================================
-
           pm10:
             airQualityData
-              .current
-              ?.pm10
+              .current?.pm10
             ?? 0,
 
           pm25:
             airQualityData
-              .current
-              ?.pm2_5
+              .current?.pm2_5
             ?? 0,
 
           aqi:
             airQualityData
-              .current
-              ?.us_aqi
+              .current?.us_aqi
             ?? 0,
         }
       })
@@ -236,14 +257,14 @@ const loadWeather = async () => {
 
 
     console.log(
-      '✅ 날씨 + 예보 + 대기질 데이터 조회 성공:',
+      '✅ 날씨 + 예보 + 대기질 조회 성공:',
       weatherList.value
     )
 
   } catch (error) {
 
     console.error(
-      '❌ API 데이터를 불러오는 중 오류 발생:',
+      '❌ API 데이터 조회 실패:',
       error
     )
 
@@ -274,15 +295,13 @@ const loadWeather = async () => {
 // =====================================================
 
 onMounted(() => {
-
   loadWeather()
-
 })
 
 
 // =====================================================
 // 2. computed
-// 검색어 필터링
+// 검색 필터
 // =====================================================
 
 const filteredWeatherList =
@@ -298,6 +317,24 @@ const filteredWeatherList =
     return weatherList.value.filter(
       (item) =>
         item.name.includes(query)
+    )
+  })
+
+
+// =====================================================
+// 지도에서 선택된 도시
+// =====================================================
+
+const selectedCity =
+  computed(() => {
+
+    if (!selectedCityId.value) {
+      return null
+    }
+
+    return weatherList.value.find(
+      (item) =>
+        item.id === selectedCityId.value
     )
   })
 
@@ -343,6 +380,7 @@ const averageTemperature =
       weatherList.value.length
       === 0
     ) {
+
       return 0
     }
 
@@ -355,7 +393,8 @@ const averageTemperature =
 
     return (
       totalTemp
-      / weatherList.value.length
+      /
+      weatherList.value.length
     ).toFixed(1)
   })
 
@@ -370,7 +409,7 @@ watch(
   (newInfo, oldInfo) => {
 
     console.log(
-      '👀 [watch 감지] 선택 도시 정보가 변경되었습니다.'
+      '👀 [watch] 선택 도시 변경'
     )
 
     console.log(
@@ -391,14 +430,14 @@ watch(
 watchEffect(() => {
 
   console.log(
-    `🔍 [watchEffect 자동 호출] 현재 검색어 "${searchQuery.value}"에 매칭되는 날씨 데이터를 확인합니다.`
+    `🔍 검색어: ${searchQuery.value}`
   )
 
 })
 
 
 // =====================================================
-// 강수확률 기준 watcher
+// 강수확률 기준 감시
 // =====================================================
 
 watch(
@@ -407,18 +446,18 @@ watch(
   (newValue, oldValue) => {
 
     console.log(
-      `☔ [나만의 watcher] 강수확률 기준이 ${oldValue}%에서 ${newValue}%로 변경되었습니다.`
+      `☔ 강수확률 기준: ${oldValue}% → ${newValue}%`
     )
 
     console.log(
-      `현재 ${newValue}% 이상인 도시는 ${rainyCities.value.length}곳입니다.`
+      `${newValue}% 이상 도시: ${rainyCities.value.length}곳`
     )
   }
 )
 
 
 // =====================================================
-// 더운 날씨 기준 watcher
+// 더운 날씨 기준 감시
 // =====================================================
 
 watch(
@@ -427,11 +466,11 @@ watch(
   (newValue, oldValue) => {
 
     console.log(
-      `🌡️ [나만의 watcher] 더움 기준이 ${oldValue}°C에서 ${newValue}°C로 변경되었습니다.`
+      `🌡️ 더움 기준: ${oldValue}°C → ${newValue}°C`
     )
 
     console.log(
-      `현재 ${newValue}°C 이상인 도시는 ${hotCities.value.length}곳입니다.`
+      `${newValue}°C 이상 도시: ${hotCities.value.length}곳`
     )
   }
 )
@@ -453,7 +492,7 @@ const updateSearchQuery =
 // WeatherCard 선택 이벤트
 // =====================================================
 
-const selectCity =
+const selectCityFromCard =
   (message) => {
 
     selectedCityInfo.value =
@@ -462,7 +501,55 @@ const selectCity =
 
 
 // =====================================================
-// 상세 페이지 이동
+// 지도에서 도시 선택
+// =====================================================
+
+const selectCityFromMap =
+  (cityId) => {
+
+    selectedCityId.value =
+      cityId
+
+
+    const city =
+      weatherList.value.find(
+        (item) =>
+          item.id === cityId
+      )
+
+
+    if (city) {
+
+      selectedCityInfo.value =
+        `🗺️ 지도에서 ${city.name}이 선택되었습니다.`
+
+      // 검색창에도 해당 도시를 넣어서
+      // 아래 카드 목록에서 해당 도시만 표시
+      searchQuery.value =
+        city.name
+    }
+  }
+
+
+// =====================================================
+// 선택 해제
+// =====================================================
+
+const clearMapSelection = () => {
+
+  selectedCityId.value =
+    null
+
+  searchQuery.value =
+    ''
+
+  selectedCityInfo.value =
+    '카드를 클릭하거나 지도에서 지역을 선택해 보세요.'
+}
+
+
+// =====================================================
+// 상세 페이지
 // =====================================================
 
 const showDetail =
@@ -493,6 +580,128 @@ const showDetail =
 
 
     <!-- ================================================= -->
+    <!-- 지도 -->
+    <!-- ================================================= -->
+
+    <BaseDashboardCard>
+
+      <h3>
+        🗺️ 지역 날씨 지도
+      </h3>
+
+      <p class="map-guide">
+        지도 마커를 클릭하면 해당 지역의
+        실제 날씨를 확인할 수 있습니다.
+      </p>
+
+
+      <WeatherMap
+        @select-city="
+          selectCityFromMap
+        "
+      />
+
+
+      <!-- =============================================== -->
+      <!-- 지도에서 선택한 도시의 실제 날씨 -->
+      <!-- =============================================== -->
+
+      <div
+        v-if="selectedCity"
+        class="map-weather-result"
+      >
+
+        <h4>
+          📍 {{ selectedCity.name }}
+          실시간 날씨
+        </h4>
+
+
+        <div class="map-weather-grid">
+
+          <div>
+            🌡️ 기온
+            <strong>
+              {{ selectedCity.temp }}°C
+            </strong>
+          </div>
+
+          <div>
+            💧 습도
+            <strong>
+              {{ selectedCity.humidity }}%
+            </strong>
+          </div>
+
+          <div>
+            ☔ 강수확률
+            <strong>
+              {{ selectedCity.rain }}%
+            </strong>
+          </div>
+
+          <div>
+            💨 풍속
+            <strong>
+              {{ selectedCity.wind }}m/s
+            </strong>
+          </div>
+
+          <div>
+            🌫️ PM10
+            <strong>
+              {{ selectedCity.pm10 }}
+            </strong>
+          </div>
+
+          <div>
+            😷 PM2.5
+            <strong>
+              {{ selectedCity.pm25 }}
+            </strong>
+          </div>
+
+          <div>
+            🍃 AQI
+            <strong>
+              {{ selectedCity.aqi }}
+            </strong>
+          </div>
+
+        </div>
+
+
+        <div class="map-result-buttons">
+
+          <button
+            class="detail-button"
+            @click="
+              showDetail(
+                selectedCity.id
+              )
+            "
+          >
+            상세 날씨 보기
+          </button>
+
+
+          <button
+            class="clear-button"
+            @click="
+              clearMapSelection
+            "
+          >
+            선택 해제
+          </button>
+
+        </div>
+
+      </div>
+
+    </BaseDashboardCard>
+
+
+    <!-- ================================================= -->
     <!-- 날씨 기준 -->
     <!-- ================================================= -->
 
@@ -513,7 +722,9 @@ const showDetail =
 
 
       <input
-        v-model.number="rainStandard"
+        v-model.number="
+          rainStandard
+        "
         type="range"
         min="0"
         max="100"
@@ -531,7 +742,9 @@ const showDetail =
 
 
       <input
-        v-model.number="hotStandard"
+        v-model.number="
+          hotStandard
+        "
         type="number"
         min="0"
         max="50"
@@ -585,7 +798,7 @@ const showDetail =
 
 
     <!-- ================================================= -->
-    <!-- 실시간 날씨 -->
+    <!-- 실제 날씨 카드 -->
     <!-- ================================================= -->
 
     <BaseDashboardCard>
@@ -594,8 +807,6 @@ const showDetail =
         🏙️ 지역별 실시간 날씨 및 대기질
       </h3>
 
-
-      <!-- 로딩 -->
 
       <p
         v-if="isLoading"
@@ -606,10 +817,10 @@ const showDetail =
       </p>
 
 
-      <!-- 에러 -->
-
       <div
-        v-else-if="errorMessage"
+        v-else-if="
+          errorMessage
+        "
         class="error-area"
       >
 
@@ -620,15 +831,15 @@ const showDetail =
 
         <button
           class="retry-button"
-          @click="loadWeather"
+          @click="
+            loadWeather
+          "
         >
           다시 불러오기
         </button>
 
       </div>
 
-
-      <!-- 정상 데이터 -->
 
       <template v-else>
 
@@ -639,18 +850,23 @@ const showDetail =
           "
           class="search-guide"
         >
-          🔎 검색어를 입력하면
-          원하는 도시를 찾을 수 있습니다.
+          🔎 검색어를 입력하거나
+          지도에서 도시를 선택해 보세요.
         </p>
 
 
         <WeatherCard
           v-for="
-            item in filteredWeatherList
+            item
+            in filteredWeatherList
           "
-          :key="item.id"
+          :key="
+            item.id
+          "
 
-          :city-item="item"
+          :city-item="
+            item
+          "
 
           :hot-standard="
             hotStandard
@@ -661,7 +877,7 @@ const showDetail =
           "
 
           @select-card="
-            selectCity
+            selectCityFromCard
           "
 
           @click-detail="
@@ -675,7 +891,7 @@ const showDetail =
             searchQuery.trim() !== ''
             &&
             filteredWeatherList.length
-              === 0
+            === 0
           "
           class="no-result"
         >
@@ -689,13 +905,11 @@ const showDetail =
 
 
     <!-- ================================================= -->
-    <!-- 선택 도시 -->
+    <!-- 선택 상태 -->
     <!-- ================================================= -->
 
     <div class="status-bar">
-
       {{ selectedCityInfo }}
-
     </div>
 
   </div>
@@ -708,88 +922,240 @@ const showDetail =
   margin: 0 auto;
 }
 
+.map-guide {
+  color: #6c757d;
+
+  font-size: 14px;
+
+  margin-bottom: 10px;
+}
+
+
+/* =====================================================
+   지도 선택 결과
+===================================================== */
+
+.map-weather-result {
+  margin-top: 15px;
+
+  padding: 18px;
+
+  background-color: #f1f8f5;
+
+  border:
+    1px solid #dfeee7;
+
+  border-radius: 8px;
+}
+
+.map-weather-result h4 {
+  margin-top: 0;
+}
+
+
+/* 날씨 정보 grid */
+
+.map-weather-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      auto-fit,
+      minmax(130px, 1fr)
+    );
+
+  gap: 10px;
+
+  margin-top: 12px;
+}
+
+.map-weather-grid div {
+  padding: 10px;
+
+  background-color: #ffffff;
+
+  border:
+    1px solid #e9ecef;
+
+  border-radius: 6px;
+}
+
+.map-weather-grid strong {
+  display: block;
+
+  margin-top: 4px;
+
+  font-size: 16px;
+}
+
+
+/* 버튼 영역 */
+
+.map-result-buttons {
+  display: flex;
+
+  gap: 10px;
+
+  margin-top: 15px;
+}
+
+.detail-button,
+.clear-button {
+  padding:
+    8px 14px;
+
+  border: none;
+
+  border-radius:
+    5px;
+
+  cursor:
+    pointer;
+
+  font-weight:
+    bold;
+}
+
+.detail-button {
+  background-color:
+    #3498db;
+
+  color:
+    #ffffff;
+}
+
+.detail-button:hover {
+  background-color:
+    #2980b9;
+}
+
+.clear-button {
+  background-color:
+    #e9ecef;
+
+  color:
+    #343a40;
+}
+
+.clear-button:hover {
+  background-color:
+    #dee2e6;
+}
+
+
+/* =====================================================
+   기존 스타일
+===================================================== */
+
 .status-bar {
   padding: 12px;
+
   margin-top: 15px;
 
   text-align: center;
 
-  background: #343a40;
-  color: #ffffff;
+  background:
+    #343a40;
 
-  border-radius: 6px;
+  color:
+    #ffffff;
+
+  border-radius:
+    6px;
 }
 
 .search-guide {
   text-align: center;
 
-  color: #6c757d;
+  color:
+    #6c757d;
 
-  padding: 8px;
+  padding:
+    8px;
 }
 
 .no-result {
   text-align: center;
 
-  color: #e74c3c;
+  color:
+    #e74c3c;
 
-  padding: 10px 0;
+  padding:
+    10px 0;
 }
 
 .loading {
   text-align: center;
 
-  padding: 20px;
+  padding:
+    20px;
 
-  color: #3498db;
+  color:
+    #3498db;
 
-  font-weight: bold;
+  font-weight:
+    bold;
 }
 
 .error-area {
   text-align: center;
 
-  padding: 20px;
+  padding:
+    20px;
 }
 
 .error-message {
-  color: #e74c3c;
+  color:
+    #e74c3c;
 
-  font-weight: bold;
+  font-weight:
+    bold;
 }
 
 .retry-button {
-  margin-top: 10px;
+  margin-top:
+    10px;
 
-  padding: 8px 14px;
+  padding:
+    8px 14px;
 
-  border: none;
+  border:
+    none;
 
-  border-radius: 4px;
+  border-radius:
+    4px;
 
-  background-color: #4b6584;
+  background-color:
+    #4b6584;
 
-  color: #ffffff;
+  color:
+    #ffffff;
 
-  cursor: pointer;
+  cursor:
+    pointer;
 
-  font-weight: bold;
+  font-weight:
+    bold;
 }
 
 .retry-button:hover {
-  background-color: #3c536d;
+  background-color:
+    #3c536d;
 }
 
 input[type='range'] {
-  width: 100%;
+  width:
+    100%;
 }
 
 input[type='number'] {
-  padding: 6px;
+  padding:
+    6px;
 
   border:
     1px solid #ced4da;
 
-  border-radius: 4px;
+  border-radius:
+    4px;
 }
 </style>
