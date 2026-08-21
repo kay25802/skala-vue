@@ -90,7 +90,7 @@ const handleGoHome = () => {
 
 <style scoped>
 .about-container {
-  width: 600px;
+  width: 100%;
   margin: 30px auto;
 }
 

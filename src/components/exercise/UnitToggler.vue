@@ -7,11 +7,10 @@ const configStore = useConfigStore()
 <template>
   <div class="config-area">
 
-    <!-- 온도 단위 -->
+    <!-- 날씨 단위 -->
     <div class="config-item">
       <span>
         날씨단위:
-
         <strong>
           {{
             configStore.unit === 'celsius'
@@ -34,7 +33,6 @@ const configStore = useConfigStore()
     <div class="config-item">
       <span>
         언어:
-
         <strong>
           {{ configStore.languageLabel }}
         </strong>
@@ -55,31 +53,92 @@ const configStore = useConfigStore()
   </div>
 </template>
 
+
 <style scoped>
 .config-area {
   display: flex;
   align-items: center;
-  gap: 15px;
+
   margin-left: auto;
+
+  /* ⭐ 두 설정 그룹 사이 간격 */
+  gap: 22px;
+
+  flex-wrap: nowrap;
+
+  white-space: nowrap;
 }
 
+
+/* 각각
+   [날씨단위 + 버튼]
+   [언어 + 버튼]
+   하나의 묶음 */
 .config-item {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 8px;
+
+  gap: 10px;
+
+  flex: 0 0 auto;
+
+  white-space: nowrap;
 }
 
+
+.config-item span {
+  display: inline-block;
+
+  white-space: nowrap;
+}
+
+
+/* 버튼 */
 .toggle-btn {
-  padding: 6px 10px;
+  flex: 0 0 auto;
+
+  padding: 7px 12px;
+
   background-color: #4b6584;
   color: #ffffff;
+
   border: none;
-  border-radius: 4px;
+  border-radius: 5px;
+
   cursor: pointer;
+
+  font-size: 13px;
   font-weight: bold;
+
+  white-space: nowrap;
+
+  line-height: 1.2;
 }
+
 
 .toggle-btn:hover {
   background-color: #3c536d;
+}
+
+
+.toggle-btn:active {
+  transform: scale(0.98);
+}
+
+
+/* 화면이 조금 좁아지는 경우 */
+@media (max-width: 1000px) {
+  .config-area {
+    gap: 14px;
+  }
+
+  .config-item {
+    gap: 7px;
+  }
+
+  .toggle-btn {
+    padding: 6px 9px;
+    font-size: 12px;
+  }
 }
 </style>
